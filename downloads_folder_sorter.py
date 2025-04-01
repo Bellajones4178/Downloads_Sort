@@ -14,6 +14,7 @@ This file contains the following functions:
 import shutil
 from pathlib import Path
 import json
+import re
 
 
 def move_file(file, destination):
@@ -36,7 +37,7 @@ def move_file(file, destination):
 
 def sort_folder(folder_path):
     """Iterates through the files in the folder, sorting
-    them into sub-folders by extension.
+    them into sub-folders by extension or by tag prefix (e.g., [Summer]).
     Parameters
     ----------
     folder_path : Path
@@ -53,8 +54,17 @@ def sort_folder(folder_path):
 
     for file in folder_path.iterdir():
         if file.is_file() and not file.name.startswith('.'):
-            destination = extensions_map.get(file.suffix, 'Other')
-            move_file(file, file.parent.joinpath(destination))
+            # Check for tag prefix like [Summer]
+            match = re.match(r'\[(.*?)\]', file.stem)
+            if match:
+                tag = match.group(1)
+                destination_folder = folder_path.joinpath(tag)
+            else:
+                # Fallback to extension-based sorting
+                folder_name = extensions_map.get(file.suffix, 'Other')
+                destination_folder = folder_path.joinpath(folder_name)
+
+            move_file(file, destination_folder)
 
 
 if __name__ == '__main__':
